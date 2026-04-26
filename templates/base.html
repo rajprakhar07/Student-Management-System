@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Student MS{% endblock %}</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body>
+
+{#
+  FIX: Jinja2 does not allow the same {% block %} name in two branches of
+  an if/else — even though only one branch executes at runtime, the parser
+  raises "block defined twice" at compile time.
+
+  Solution: use ONE block content, and let the child templates handle the
+  wrapper HTML via {% block shell %}. Authenticated pages get the full
+  sidebar wrapper; the login page sets shell to an empty string.
+#}
+
+{% block shell %}
+{# ── Default shell: sidebar + topbar (used by all authenticated pages) ── #}
+<div class="wrapper">
+  <nav id="sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🎓</span>
+      <span class="brand-text">SmartSMS</span>
+    </div>
+
+    <ul class="sidebar-nav">
+      <li class="nav-item">
+        <a href="{{ url_for('dashboard') }}"
+           class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+          <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('view_students') }}"
+           class="nav-link {% if request.endpoint in ['view_students','edit_student'] %}active{% endif %}">
+          <i class="bi bi-people-fill"></i> Students
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('add_student') }}"
+           class="nav-link {% if request.endpoint == 'add_student' %}active{% endif %}">
+          <i class="bi bi-person-plus-fill"></i> Add Student
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('export_csv') }}" class="nav-link">
+          <i class="bi bi-download"></i> Export CSV
+        </a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <i class="bi bi-person-circle"></i>
+        <span>{{ session.user }}</span>
+      </div>
+      <a href="{{ url_for('logout') }}" class="btn-logout">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </a>
+    </div>
+  </nav>
+
+  <div id="content">
+    <header class="topbar">
+      <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="bi bi-list"></i>
+      </button>
+      <h5 class="page-title">{% block page_title %}{% endblock %}</h5>
+      <div class="topbar-right">
+        <span class="badge-date"><i class="bi bi-calendar3"></i> {{ now }}</span>
+      </div>
+    </header>
+
+    <div class="flash-container">
+      {% for cat, msg in get_flashed_messages(with_categories=True) %}
+      <div class="alert alert-{{ cat }} alert-dismissible fade show" role="alert">
+        {{ msg }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+
+    <main class="page-body">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const toggle = document.getElementById("sidebarToggle");
+  if (toggle) {
+    toggle.addEventListener("click", () => {
+      document.getElementById("sidebar").classList.toggle("collapsed");
+    });
+  }
+  setTimeout(() => {
+    document.querySelectorAll(".alert").forEach(a => {
+      try { new bootstrap.Alert(a).close(); } catch(e) {}
+    });
+  }, 4000);
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

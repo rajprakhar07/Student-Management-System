@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block title %}Students — SmartSMS{% endblock %}
+{% block page_title %}All Students{% endblock %}
+
+{% block content %}
+
+<!-- ─── Search & Actions bar ───────────────────────────────────────── -->
+<div class="card-panel mb-4">
+  <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+    <form method="GET" action="{{ url_for('view_students') }}" class="search-form d-flex gap-2">
+      <div class="input-icon-wrap">
+        <i class="bi bi-search input-icon"></i>
+        <input
+          type="text"
+          name="q"
+          class="form-control ps-5"
+          placeholder="Search by name, ID, or enroll no…"
+          value="{{ query }}"
+          style="min-width: 260px;"
+        />
+      </div>
+      <button type="submit" class="btn btn-primary-custom">Search</button>
+      {% if query %}
+      <a href="{{ url_for('view_students') }}" class="btn btn-outline-custom">Clear</a>
+      {% endif %}
+    </form>
+
+    <div class="d-flex gap-2">
+      <a href="{{ url_for('add_student') }}" class="btn btn-primary-custom">
+        <i class="bi bi-person-plus-fill me-2"></i>Add Student
+      </a>
+      <a href="{{ url_for('export_csv') }}" class="btn btn-outline-custom">
+        <i class="bi bi-download me-2"></i>CSV
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Results info ───────────────────────────────────────────────── -->
+<div class="mb-3 text-muted small">
+  {% if query %}
+    Showing <strong>{{ students|length }}</strong> result(s) for "<strong>{{ query }}</strong>"
+  {% else %}
+    <strong>{{ students|length }}</strong> student(s) total
+  {% endif %}
+</div>
+
+<!-- ─── Students Table ─────────────────────────────────────────────── -->
+{% if students %}
+<div class="table-wrap">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>ID</th>
+        <th>Enroll No</th>
+        <th>Name</th>
+        <th>Sem</th>
+        <th>Course</th>
+        <th>Marks</th>
+        <th>Total</th>
+        <th>%</th>
+        <th>Grade</th>
+        <th>Attend.</th>
+        <th>Eligible</th>
+        <th>Fees</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in students %}
+      <tr>
+        <td class="mono text-muted">{{ loop.index }}</td>
+        <td class="mono"><strong>{{ s.student_id }}</strong></td>
+        <td class="mono">{{ s.enroll_no }}</td>
+        <td>
+          <div class="student-name">{{ s.name }}</div>
+        </td>
+        <td class="text-center">{{ s.semester }}</td>
+        <td><span class="course-tag">{{ s.course }}</span></td>
+        <td>
+          <div class="marks-pills">
+            {% for m in s.subjects %}
+            <span class="mark-pill {% if m >= 75 %}mark-hi{% elif m >= 40 %}mark-mid{% else %}mark-lo{% endif %}">
+              {{ m }}
+            </span>
+            {% endfor %}
+          </div>
+        </td>
+        <td class="mono">{{ s.total }}/{{ s.max_marks }}</td>
+        <td>
+          <div class="pct-bar-wrap">
+            <div class="pct-bar" 
+              data-pct="{{ s.percentage }}"></div>
+            <span class="pct-label">{{ s.percentage }}%</span>
+          </div>
+        </td>
+        <td class="text-center">
+          <span class="grade-badge grade-{{ s.grade | replace('Fail','F') }}">{{ s.grade }}</span>
+        </td>
+        <td class="text-center">
+          {% if s.attendance >= 75 %}
+            <span class="text-success fw-semibold">{{ s.attendance }}%</span>
+          {% else %}
+            <span class="text-danger fw-semibold">{{ s.attendance }}%</span>
+          {% endif %}
+        </td>
+        <td class="text-center">
+          {% if s.eligibility == "Eligible" %}
+            <span class="badge-elig elig-yes"><i class="bi bi-check-circle-fill"></i> Yes</span>
+          {% else %}
+            <span class="badge-elig elig-no"><i class="bi bi-x-circle-fill"></i> No</span>
+          {% endif %}
+        </td>
+        <td class="mono">₹{{ "%.0f"|format(s.fees) }}</td>
+        <td>
+          <div class="action-btns">
+            <a href="{{ url_for('edit_student', student_id=s._id) }}"
+               class="btn-action btn-edit" title="Edit">
+              <i class="bi bi-pencil-fill"></i>
+            </a>
+            <form method="POST" action="{{ url_for('delete_student', student_id=s._id) }}"
+                  onsubmit="return confirm('Delete student {{ s.name }}?')">
+              <button type="submit" class="btn-action btn-delete" title="Delete">
+                <i class="bi bi-trash-fill"></i>
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% else %}
+<div class="empty-state">
+  <i class="bi bi-person-x-fill empty-icon"></i>
+  <h4>No students found</h4>
+  {% if query %}
+  <p>No results for "<strong>{{ query }}</strong>". Try a different search term.</p>
+  <a href="{{ url_for('view_students') }}" class="btn btn-outline-custom mt-2">Clear Search</a>
+  {% else %}
+  <p>No students have been added yet.</p>
+  <a href="{{ url_for('add_student') }}" class="btn btn-primary-custom mt-2">
+    <i class="bi bi-person-plus-fill me-2"></i>Add First Student
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // Colour percentage bars on load
+  document.querySelectorAll(".pct-bar").forEach(bar => {
+    const pct = parseFloat(bar.dataset.pct);
+    if (pct >= 75)      bar.style.background = "var(--green)";
+    else if (pct >= 60) bar.style.background = "var(--blue)";
+    else if (pct >= 40) bar.style.background = "var(--amber)";
+    else                bar.style.background = "var(--red)";
+  });
+</script>
+{% endblock %}

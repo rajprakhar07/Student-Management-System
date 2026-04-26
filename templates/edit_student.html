@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}Edit Student — SmartSMS{% endblock %}
+{% block page_title %}Edit Student{% endblock %}
+
+{% block content %}
+
+<div class="row g-4">
+  <div class="col-lg-8">
+    <div class="card-panel">
+      <h5 class="panel-title mb-4">
+        <i class="bi bi-pencil-square me-2 text-warning"></i>
+        Editing: <strong>{{ student.name }}</strong>
+      </h5>
+
+      <form method="POST" action="{{ url_for('edit_student', student_id=student._id) }}" id="studentForm">
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label">Student ID <span class="req">*</span></label>
+            <input type="text" name="student_id" class="form-control" required
+                   value="{{ student.student_id }}"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Enroll No <span class="req">*</span></label>
+            <input type="text" name="enroll_no" class="form-control" required
+                   value="{{ student.enroll_no }}"/>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-12">
+            <label class="form-label">Full Name <span class="req">*</span></label>
+            <input type="text" name="name" class="form-control" required
+                   value="{{ student.name }}"/>
+          </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label class="form-label">Semester <span class="req">*</span></label>
+            <select name="semester" class="form-select" required>
+              {% for i in range(1, 9) %}
+              <option value="{{ i }}" {% if student.semester|string == i|string %}selected{% endif %}>
+                Semester {{ i }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Course <span class="req">*</span></label>
+            <input type="text" name="course" class="form-control" required
+                   value="{{ student.course }}"/>
+          </div>
+        </div>
+
+        <!-- Subject marks pre-filled -->
+        <div class="mb-3">
+          <label class="form-label">Subject Marks (out of 100) <span class="req">*</span></label>
+          <div class="row g-2">
+            {% for i in range(1, 6) %}
+            <div class="col">
+              <label class="form-label small text-muted">Sub {{ i }}{% if i <= 4 %} *{% endif %}</label>
+              <input
+                type="number" name="subject_{{ i }}"
+                class="form-control subject-input text-center"
+                min="0" max="100"
+                placeholder="{{ '—' if i == 5 else '0–100' }}"
+                {% if i <= 4 %}required{% endif %}
+                value="{{ student.subjects[i-1] if student.subjects|length >= i else '' }}"
+                oninput="updatePreview()"
+              />
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label">Attendance (%) <span class="req">*</span></label>
+            <input type="number" name="attendance" class="form-control"
+                   min="0" max="100" step="0.1" required
+                   value="{{ student.attendance }}"
+                   oninput="updatePreview()"/>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Fees (₹) <span class="req">*</span></label>
+            <input type="number" name="fees" class="form-control"
+                   min="0" step="0.01" required
+                   value="{{ student.fees }}"/>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3">
+          <button type="submit" class="btn btn-primary-custom px-5">
+            <i class="bi bi-save-fill me-2"></i>Update Student
+          </button>
+          <a href="{{ url_for('view_students') }}" class="btn btn-outline-custom px-4">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ─── Live Preview ──────────────────────────────────────────────── -->
+  <div class="col-lg-4">
+    <div class="card-panel preview-card">
+      <h5 class="panel-title mb-4">
+        <i class="bi bi-eye-fill me-2 text-info"></i>Live Preview
+      </h5>
+      <div class="preview-item">
+        <span class="preview-label">Total Marks</span>
+        <span class="preview-val mono" id="prev-total">—</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Max Marks</span>
+        <span class="preview-val mono" id="prev-max">—</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Percentage</span>
+        <span class="preview-val mono" id="prev-pct">—</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Grade</span>
+        <span class="preview-val" id="prev-grade">—</span>
+      </div>
+      <div class="preview-item">
+        <span class="preview-label">Eligibility</span>
+        <span class="preview-val" id="prev-elig">—</span>
+      </div>
+      <div class="pct-bar-wrap mt-3" style="height:10px;border-radius:5px;">
+        <div class="pct-bar" id="prev-bar" style="width:0%;height:100%;border-radius:5px;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updatePreview() {
+  const inputs = document.querySelectorAll(".subject-input");
+  let marks = [], max = 0;
+  inputs.forEach(inp => {
+    const v = inp.value.trim();
+    if (v !== "") { marks.push(parseInt(v) || 0); max += 100; }
+  });
+  if (marks.length === 0) return;
+  const total = marks.reduce((a,b) => a+b, 0);
+  const pct   = parseFloat(((total / max) * 100).toFixed(2));
+  const grade = pct >= 75 ? "A" : pct >= 60 ? "B" : pct >= 40 ? "C" : "Fail";
+  const att   = parseFloat(document.querySelector("[name='attendance']").value || 0);
+  const elig  = att >= 75 ? "✅ Eligible" : "❌ Not Eligible";
+  document.getElementById("prev-total").textContent = total;
+  document.getElementById("prev-max").textContent   = max;
+  document.getElementById("prev-pct").textContent   = pct + "%";
+  const gradeEl = document.getElementById("prev-grade");
+  gradeEl.textContent = grade;
+  gradeEl.className = "preview-val grade-badge grade-" + (grade === "Fail" ? "F" : grade);
+  document.getElementById("prev-elig").textContent  = elig;
+  const bar = document.getElementById("prev-bar");
+  bar.style.width = Math.min(pct, 100) + "%";
+  bar.style.background = pct >= 75 ? "var(--green)" : pct >= 60 ? "var(--blue)"
+                        : pct >= 40 ? "var(--amber)" : "var(--red)";
+}
+updatePreview();
+</script>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SmartSMS{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+
+{% if stats.db_offline %}
+<div class="alert alert-danger d-flex align-items-center gap-2">
+  <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+  <div>
+    <strong>MongoDB is offline.</strong>
+    Start MongoDB with <code>mongod --dbpath /data/db</code> and refresh.
+  </div>
+</div>
+{% endif %}
+
+<!-- ─── Stat Cards ──────────────────────────────────────────────────── -->
+<div class="row g-4 mb-4">
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card stat-blue">
+      <div class="stat-icon"><i class="bi bi-people-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.total }}</div>
+        
+        <div class="stat-label">Total Students</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card stat-green">
+      <div class="stat-icon"><i class="bi bi-check-circle-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.pass }}</div>
+        <div class="stat-label">Passed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card stat-red">
+      <div class="stat-icon"><i class="bi bi-x-circle-fill"></i></div>
+      <div class="stat-body">
+        <div class="stat-num">{{ stats.fail }}</div>
+        <div class="stat-label">Failed</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3 col-md-6">
+    <div class="stat-card stat-amber">
+      <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-body">
+        <div class="stat-num">{{ "%.2f"|format(stats.avg_pct) }}%</div>
+       
+        <div class="stat-label">Avg Percentage</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── Quick Actions ──────────────────────────────────────────────── -->
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card-panel">
+      <h5 class="panel-title"><i class="bi bi-lightning-charge-fill me-2 text-warning"></i>Quick Actions</h5>
+      <div class="d-flex flex-wrap gap-3 mt-3">
+        <a href="{{ url_for('add_student') }}" class="btn btn-primary-custom">
+          <i class="bi bi-person-plus-fill me-2"></i>Add Student
+        </a>
+        <a href="{{ url_for('view_students') }}" class="btn btn-outline-custom">
+          <i class="bi bi-table me-2"></i>View All
+        </a>
+        <a href="{{ url_for('export_csv') }}" class="btn btn-outline-custom">
+          <i class="bi bi-download me-2"></i>Export CSV
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card-panel">
+      <h5 class="panel-title"><i class="bi bi-info-circle-fill me-2 text-info"></i>Grade Scale</h5>
+      <div class="grade-table mt-3">
+        <div class="grade-row"><span class="grade-badge grade-A">A</span><span>75% and above — Excellent</span></div>
+        <div class="grade-row"><span class="grade-badge grade-B">B</span><span>60% – 74% — Good</span></div>
+        <div class="grade-row"><span class="grade-badge grade-C">C</span><span>40% – 59% — Average</span></div>
+        <div class="grade-row"><span class="grade-badge grade-F">Fail</span><span>Below 40% — Needs Improvement</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
