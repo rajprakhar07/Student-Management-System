@@ -29,9 +29,16 @@ app = Flask(__name__)
 app.secret_key = "student_mgmt_secret_key_2024"   # Change in production!
 
 # ── MongoDB Connection ───────────────────────────────────────────────────────
+import os
+from dotenv import load_dotenv
+from pymongo import MongoClient
+
+load_dotenv()
+
+
 
 try:
-    client = MongoClient("mongodb+srv://admin:admin123@cluster0.adyqznh.mongodb.net/?appName=Cluster0", serverSelectionTimeoutMS=3000)
+    client = MongoClient(os.getenv("MONGO_URI"))
     client.server_info()
     db = client["student_db"]
     students_col = db["students"]
