@@ -40,4 +40,4 @@ python app.py
 
 ## 👨‍💻 Author
 
-* Your Name
+* Prakhar Raj
