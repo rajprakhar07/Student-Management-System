@@ -17,6 +17,9 @@ https://student-management-system-whtz.onrender.com
 * User Login/Register
 * Add, View, Update, Delete Students
 * Dashboard Interface
+* 📊 Automatic Marks's Percentage Calculation
+* ✅ Eligibility Check (based on student percentage & Attendance)
+
 
 ---
 
