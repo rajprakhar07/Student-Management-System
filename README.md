@@ -3,7 +3,7 @@
 A simple web-based Student Management System built using **Flask** and **MongoDB** to manage student records with CRUD operations and authentication.
 
 ---
----
+
 
 ## Live Demo
 
